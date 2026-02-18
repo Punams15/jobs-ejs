@@ -13,3 +13,17 @@
 <% } %>
 
 <hr>
+
+<nav>
+  <% if (user) { %>
+    Hello, <%= user.name %> |
+    <form action="/sessions/logoff" method="POST" style="display:inline;">
+      <button type="submit">Log Out</button>
+    </form>
+  <% } else { %>
+    <a href="/sessions/logon">Log In</a> |
+    <a href="/sessions/register">Register</a>
+  <% } %>
+</nav>
+
+<hr>

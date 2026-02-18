@@ -1,10 +1,13 @@
-const express = require("express");
-require("express-async-errors");
 require("dotenv").config();
-const bodyParser = require("body-parser");
+const express = require("express");
 const session = require("express-session");
 const flash = require("connect-flash");
+const passport = require("passport");
 const path = require("path");
+
+const passportInit = require("./passport/passportInit");
+const connectDB = require("./db/connect");
+const storeLocals = require("./middleware/storeLocals");
 
 const app = express();
 
@@ -13,57 +16,39 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 // Body parser
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 
 // Session
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "defaultsecret",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
   })
 );
 
 // Flash messages
 app.use(flash());
+app.use(storeLocals);
 
-// Middleware to pass flash messages to views
-app.use((req, res, next) => {
-  res.locals.info = req.flash("info");
-  res.locals.errors = req.flash("error");
-  next();
-});
+// Passport
+passportInit();
+app.use(passport.initialize());
+app.use(passport.session());
 
 // --- Routes ---
-
-// Homepage route
 app.get("/", (req, res) => {
-  res.render("index"); // Make sure views/index.ejs exists
+  res.render("index");
 });
 
-// Secret Word page
-app.get("/secretWord", (req, res) => {
-  if (!req.session.secretWord) {
-    req.session.secretWord = "syzygy";
-  }
-  res.render("secretWord", { secretWord: req.session.secretWord });
-});
+app.use("/sessions", require("./routes/sessionRoutes"));
 
-app.post("/secretWord", (req, res) => {
-  const newWord = req.body.secretWord;
-  if (newWord.toUpperCase().startsWith("P")) {
-    req.flash("error", "That word won't work! You can't use words that start with P.");
-  } else {
-    req.session.secretWord = newWord;
-    req.flash("info", "The secret word was changed.");
-  }
-  res.redirect("/secretWord");
-});
+const auth = require("./middleware/auth");
+const secretWordRouter = require("./routes/secretWord");
+app.use("/secretWord", auth, secretWordRouter);
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).send(`That page (${req.url}) was not found.`);
-});
+app.use((req, res) => res.status(404).send(`Page ${req.url} not found`));
 
 // Error handler
 app.use((err, req, res, next) => {
@@ -72,7 +57,11 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});
+const start = async () => {
+  await connectDB(process.env.MONGO_URI);
+  console.log("MongoDB connected successfully");
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+};
+
+start();

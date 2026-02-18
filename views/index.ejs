@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Jobs Assignment Home</title>
-</head>
-<body>
-  <h1>Welcome to the Jobs Assignment!</h1>
-  <p>Go to <a href="/secretWord">Secret Word</a></p>
-</body>
-</html>
+<%- include("partials/head.ejs") %>
+<%- include("partials/header.ejs") %>
 
+<% if (user) { %>
+    <a href="/secretWord">Click this link to view/change the secret word.</a>
+<% } else { %>
+    <a href="/sessions/logon">Click this link to logon.</a>
+    <a href="/sessions/register">Click this link to register.</a>
+<% } %>
 
+<%- include("partials/footer.ejs") %>
