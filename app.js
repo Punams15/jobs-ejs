@@ -14,8 +14,11 @@ import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import expressLayouts from 'express-ejs-layouts';
 
-// Import Passport config & routes
-import './config/passport.js';
+// Import Passport config
+import passportInit from './passport/passportInit.js';
+passportInit(passport);
+
+// Routes
 import authRoutes from './routes/authRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 
@@ -26,10 +29,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ---------------- SECURITY ----------------
-app.use(helmet());               // basic security headers
-app.use(xss());                  // sanitize user input
-app.use(cookieParser());         // parse cookies for CSRF
-app.set('trust proxy', 1);       // if deployed behind a proxy (Render, Heroku)
+app.use(helmet()); // basic security headers
+app.use(xss());    // sanitize user input
+app.use(cookieParser()); // needed for cookie-based CSRF
+app.set('trust proxy', 1); // if deployed behind a proxy
 
 // Rate limiting: max 100 requests per 15 min
 const limiter = rateLimit({
@@ -39,17 +42,9 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CSRF protection
-app.use(csurf({ cookie: true }));
-
-// ---------------- VIEW ENGINE ----------------
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-app.use(expressLayouts);
-app.set('layout', 'layouts/main'); // default layout
-
 // ---------------- BODY PARSER ----------------
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // optional for JSON requests
 
 // ---------------- STATIC FILES ----------------
 app.use(express.static(path.join(__dirname, 'public')));
@@ -71,15 +66,25 @@ app.use(passport.session());
 // ---------------- FLASH MESSAGES ----------------
 app.use(flash());
 
-// Set res.locals for EJS templates
+// ---------------- CSRF ----------------
+// Must come after session & cookieParser
+app.use(csurf());
+
+// ---------------- RES.LOCALS FOR EJS ----------------
 app.use((req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   res.locals.info = req.flash('info');
   res.locals.user = req.user;
-  res.locals.csrfToken = req.csrfToken(); // make CSRF token available in all forms
+  res.locals.csrfToken = req.csrfToken(); // include in all forms
   next();
 });
+
+// ---------------- VIEW ENGINE ----------------
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(expressLayouts);
+app.set('layout', 'layouts/main'); // default layout
 
 // ---------------- ROUTES ----------------
 app.use('/auth', authRoutes);        // login/register/logout
@@ -99,7 +104,6 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error(err);
   if (err.code === 'EBADCSRFTOKEN') {
-    // CSRF token error
     return res.status(403).send('Form tampered with.');
   }
   res.status(500).send(err.message);

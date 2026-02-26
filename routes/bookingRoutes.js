@@ -20,7 +20,7 @@ router.get('/', isAuth, getAllBookings);
 router.get('/new', isAuth, showNewBookingForm);
 
 // Create a new booking
-router.post('/', isAuth, createBooking);
+router.post('/new', isAuth, createBooking);
 
 // Show edit booking form
 router.get('/edit/:id', isAuth, showEditBookingForm);

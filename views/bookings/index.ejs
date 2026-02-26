@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+
+<h1>My Bookings</h1>
+
+<!-- Flash messages -->
+<% if (success && success.length) { %>
+  <div class="alert alert-success"><%= success %></div>
+<% } %>
+<% if (error && error.length) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<a href="/bookings/new"><button type="button">New Booking</button></a>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr>
+      <th>Hotel</th>
+      <th>Location</th>
+      <th>Check-In</th>
+      <th>Check-Out</th>
+      <th>Guests</th>
+      <th>Price</th>
+      <th>Notes</th>
+      <th colspan="2">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (bookings.length) { %>
+      <% bookings.forEach((booking) => { %>
+        <tr>
+          <td><%= booking.hotelName %></td>
+          <td><%= booking.location %></td>
+          <td><%= booking.checkInDate.toLocaleDateString() %></td>
+          <td><%= booking.checkOutDate.toLocaleDateString() %></td>
+          <td><%= booking.guests %></td>
+          <td>$<%= booking.price.toFixed(2) %></td>
+          <td><%= booking.notes || '-' %></td>
+          <td>
+            <a href="/bookings/edit/<%= booking._id %>">
+              <button type="button">Edit</button>
+            </a>
+          </td>
+          <td>
+            <form action="/bookings/delete/<%= booking._id %>" method="POST" style="display:inline;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    <% } else { %>
+      <tr>
+        <td colspan="9">No bookings yet.</td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>
+
+<%- include('../partials/footer') %>
