@@ -1,0 +1,60 @@
+<!-- views/layouts/main.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Globetrek</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <img src="/images/logo.png" alt="Globetrek Logo">
+    </div>
+    <nav>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <% if (!user) { %>
+          <li><a href="/auth/login">Login</a></li>
+          <li><a href="/auth/register">Register</a></li>
+        <% } else { %>
+          <li>
+            <!-- Logout form using POST and CSRF token -->
+            <form action="/auth/logout" method="POST" style="display:inline;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit">Logout</button>
+            </form>
+          </li>
+        <% } %>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Flash messages -->
+  <section class="messages">
+    <% if (success && success.length > 0) { %>
+      <div class="flash success"><%= success %></div>
+    <% } %>
+    <% if (error && error.length > 0) { %>
+      <div class="flash error"><%= error %></div>
+    <% } %>
+    <% if (info && info.length > 0) { %>
+      <div class="flash info"><%= info %></div>
+    <% } %>
+  </section>
+
+  <!-- Main content -->
+  <main>
+    <%- body %>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    &copy; 2026 Globetrek. All rights reserved.
+  </footer>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>
